@@ -1,0 +1,691 @@
+% !Mode:: "TeX:UTF-8"
+%!TEX program  = xelatex
+
+%\documentclass{cumcmthesis}
+\documentclass[withoutpreface,bwprint]{cumcmthesis} %去掉封面与编号页
+
+
+
+\usepackage{url}
+\title{小锅的机器学习笔记--线性模型}
+
+
+\schoolname{苏州大学}
+
+
+\begin{document}
+	\makeatletter %使\section中的内容左对齐
+	\renewcommand{\section}{\@startsection{section}{300}{0mm}
+		{-\baselineskip}{0.5\baselineskip}{\bf\leftline}}
+	\renewcommand{\subsection}{\@startsection{section}{300}{5mm}
+		{-\baselineskip}{0.5\baselineskip}{\bf\leftline}}
+		
+
+
+ \maketitle
+
+%目录
+%\tableofcontents
+%\newpage
+设:
+\begin{align*}
+	\text{数据集矩阵为:}
+	\quad
+	X&=\left[
+	\begin{array}{c}
+		X_1^T\\
+		X_2^T\\
+		\vdots\\
+		X_n^T
+	\end{array}
+	\right]_{n{\times}(p+1)}
+	\quad X_i=\left[
+	\begin{array}{c}
+		x_{i1}\\
+		x_{i2}\\
+		\vdots\\
+		x_{ip}\\
+		1	
+	\end{array}
+	\right]_{(p+1){\times}1}
+	\quad \textbf{其中每一个}X_i\textbf{为一个样本}\\
+	Y&=\left[
+	\begin{array}{c}
+		y_{1}\\
+		y_{2}\\
+		\vdots\\
+		y_{n}\\	
+	\end{array}
+	\right]_{n{\times}1} \quad
+	\textbf{其中每一个}y_i\textbf{为一个对应样本的观测值}\\
+	W&=\left[
+	\begin{array}{c}
+		w_1\\
+		w_2\\
+		\vdots\\
+		w_p\\
+		b
+	\end{array}		
+	\right]_{(p+1){\times}1} \quad \textbf{其中$b$为偏执项}
+\end{align*}
+	\section{\LARGE 线性回归:}
+	
+	\subsection{\Large 最小二乘法:}
+	损失函数即为预测值与观测值的误差:
+	\begin{equation}
+		L(W)=(W^TX^T-Y^T)(W^TX^T-Y^T)^T=W^TX^TXW-2W^TX^TY+Y^TY
+	\end{equation}
+	所以:
+	\begin{align*}
+		\dfrac{\mathrm{d} L(W)}{\mathrm{d} W}=\dfrac{\mathrm{d }  [W^TX^TXW]}{\mathrm{d} W}
+		-
+		2\dfrac{\mathrm{d} [ W^TX^TY]}{\mathrm{d} W}
+	\end{align*}
+	因为:
+	\begin{equation}
+		\dfrac{\mathrm{d }  [W^TX^TXW]}{\mathrm{d} W}=\dfrac{\mathrm{d }  [W^T]}{\mathrm{d} W} X^TXW 
+		+\dfrac{\mathrm{d }  [W]}{\mathrm{d} W} (W^TX^TX)^T=2X^TXW
+	\end{equation}
+	令:
+	\begin{align*}
+		A=X^TY \quad A=\left[
+			a_1,a_2,\ldots,a_{p+1}
+		\right]^T_{(p+1){\times} 1}
+	\end{align*}
+	\begin{equation}
+		\dfrac{\mathrm{d} [ W^TX^TY]}{\mathrm{d} W}=\left[
+			\begin{array}{c}
+				\dfrac{\partial W^TA}{\partial w_1}\\\\
+				\dfrac{\partial W^TA}{\partial w_2}\\\\
+				\vdots\\\\
+				\dfrac{\partial W^TA}{\partial w_n}\\\\
+			\end{array}
+		\right]=\left[
+		\begin{array}{c}
+			\dfrac{\partial \sum_{i=1}^{p}(w_ia_i)+b\cdot a_{p+1} }{\partial w_1}\\\\
+			\dfrac{\partial \sum_{i=1}^{p}(w_ia_i)+b\cdot a_{p+1}}{\partial w_2}\\\\
+			\vdots\\\\
+			\dfrac{\partial \sum_{i=1}^{p}(w_ia_i)+b\cdot a_{p+1}}{\partial b}\\\\
+		\end{array}
+		\right]=\left[
+			\begin{array}{c}
+				a_1\\
+				a_2\\
+				\vdots\\
+				a_{p+1}
+			\end{array}
+		\right]=X^TY
+	\end{equation}
+	所以可以知道:
+	\begin{equation}
+		\dfrac{\mathrm{d} L(W)}{\mathrm{d} W}=2X^TXW-2X^TY
+	\end{equation}
+	我们令$\dfrac{\mathrm{d} L(W)}{\mathrm{d} W}==0$，且当$X^TX$可逆时:
+	可以知道:
+	\begin{equation}
+		W=(X^TX)^{-1}X^TY
+	\end{equation}
+\subsection{\Large 概率视角看待线性回归:}
+	我们假设数据集可以通过线性完美拟合，但是对于每一个观察值$y_i$，当我们在观察到它时总是会受到噪声$\varepsilon$的影响:
+	\begin{equation}
+		y_i=y_i^{*}+\varepsilon_i \quad\quad \text{其中$y_i^{*}$为真实值}
+	\end{equation}
+	我们设:
+	\begin{equation}
+		\varepsilon=\left[
+			\begin{array}{c}
+				\varepsilon_1\\
+				\varepsilon_2\\
+				\vdots\\
+				\varepsilon_n
+			\end{array}
+		\right]  \quad \quad \text{且$\varepsilon_i$服从均值为$0$，方差为$\sigma^2$的高斯分布，且$\varepsilon_i$ 之间相互独立}\quad\quad 
+	\end{equation}
+	则有:
+	\begin{equation}
+		Y=W^TX^T+\varepsilon
+	\end{equation}
+	所以有:
+	\begin{equation}
+		Y|W \quad \~{}\~{}\quad N(W^TX^T,\sigma^2)
+	\end{equation}
+	所以:
+	\begin{align*}
+		W_{MAP}&={\mathop{argmax}\limits_{W}}P(Y|W)={\mathop{argmax}\limits_{W}}\sum_{i=1}^{n}\log P(y_i,X_i|w)
+		\\&={\mathop{argmax}\limits_{W}}\sum_{i=1}^{n} [\log(\dfrac{1}{\sqrt{2\pi}\sigma})-\dfrac{1}{2\sigma^2}(y_i-W^TX_i)^2]\\
+		&={\mathop{argmin}\limits_{W}}\sum_{i=1}^{n}(y_i-W^TX_i)^2\\
+		&=(W^TX^T-Y^T)(W^TX^T-Y^T)^T
+	\end{align*}
+	可以观察到最终要优化的函数和最小二乘法所要优化的是一样的。
+	\subsection{\Large 线性回归的正则化(岭回归):}
+	其实就是修改损失函数,其中$\lambda$是正则化系数:
+	\begin{equation}
+		J(W)=	L(W)+\lambda{W^TW}==W^TX^TXW-2W^TX^TY+Y^TY+\lambda{W^TW}
+	\end{equation}
+	求导可得:
+	\begin{equation}
+		\dfrac{\partial J(w)}{\partial W}=2(X^TX+\lambda{I})-2X^TY
+	\end{equation}
+	令倒数等于$0$可以得到:
+	\begin{equation}
+		W=(X^TX+\lambda{I})^{-1}X^TY
+	\end{equation}
+	此时$(X^TX+\lambda{I})$一定可逆。
+	\subsection{\Large 从贝叶斯角度看线性回归:}
+	和概率视角一样
+	\begin{align*}
+		y_i=y_i^{*}+\varepsilon_i \quad\quad Y|W \quad \~{}\~{}\quad N(W^TX^T,\sigma^2)
+	\end{align*}
+	所以有:
+	\begin{equation}
+		P(Y|W)=\prod \limits_{i=1}^nP(y_i,X_i|W)=\prod \limits_{i=1}^n\dfrac{1}{\sqrt{2\pi}\sigma}\exp[-\dfrac{(y-W^TX_i)^2}{2\sigma^2}]
+	\end{equation}
+	"贝叶斯"认为$W$满足一个先验分布$W \~{} \~{} N(0,\sigma^2_0)$，那么也就是:
+	\begin{equation}
+		P(W)=\dfrac{1}{\sqrt{2\pi}\sigma_0}\exp[-\dfrac{W^TW}{2\sigma_0^2}]
+	\end{equation}
+	\begin{align*}
+		W_{MAP}&={\mathop{argmax}\limits_{W}}\log P(W|Y)={\mathop{argmax}\limits_{W}} \log P(Y|W)P(W)\\
+				&={\mathop{argmax}\limits_{W}}\log P(Y|W) +\log P(W)\\
+				&={\mathop{argmax}\limits_{W}} \sum_{i=1}^{n} \log[\dfrac{1}{\sqrt{2\pi}\sigma}\exp[-\dfrac{(y-W^TX_i)^2}{2\sigma^2}]]+\log \dfrac{1}{\sqrt{2\pi}\sigma_0}\exp[-\dfrac{W^TW}{2\sigma_0^2}]\\
+				&={\mathop{argmax}\limits_{W}} \sum_{i=1}^{n} -\dfrac{(y-W^TX_i)^2}{2\sigma^2} -\dfrac{W^TW}{2\sigma_0^2}\\
+				&={\mathop{argmin}\limits_{W}} \sum_{i=1}^{n} (y-W^TX_i)^2+\dfrac{\sigma^2}{\sigma_0^2}W^TW
+	\end{align*}
+	其实就是相当于$\lambda=\dfrac{\sigma^2}{\sigma_0^2}$的岭回归正则化。
+	\section{\LARGE 线性分类}
+	
+	\subsection{\Large 硬分类:}
+	\begin{align*}
+		Y=\left[
+		\begin{array}{c}
+			y_1\\
+			y_2\\
+			\vdots\\
+			y_n
+		\end{array}
+		\right] \quad\quad 
+		y_i=\begin{cases}
+			+1 & \textbf{$if$ 第$i$个样本是正样本} \\
+			-1 & \textbf{$if$ 第$i$个样本是负样本}\\
+		\end{cases}	
+	\end{align*}
+	\textbf{感知机:}\\
+	基于错误驱动的思想,假设数据是线性可分的:
+	
+	那么模型为:
+	\begin{equation}
+		f(X_i)=sign [W^TX_i] \quad \quad sign(a)=\begin{cases}
+			+1 & \textbf{$if$ $a>0$} \\
+			-1 & \textbf{$if$ $a<0$}\\
+		\end{cases}	
+	\end{equation}
+	当样本被错误分类时，有:
+	\begin{equation*}
+		y_iW^TX_i<0
+	\end{equation*}
+	那么损失函数为:
+	\begin{equation}
+		L(W)=\sum_{X_i\in D} -y_iW^TX_i \quad \quad \textbf{其中 $D$ 为被错误分类的样本集合}
+	\end{equation}
+	所以
+	\begin{equation}
+		\dfrac{\partial L(W)}{\partial W}=\sum_{X_i\in D} -y_iX_i
+	\end{equation}
+	然后利用随机梯度下降法求解直至完全分类正确为止:
+	\begin{equation}
+		W^{t+1}=W^{t}-\lambda \dfrac{\partial L(W)}{\partial W} \quad \quad \textbf{$\lambda$ 为学习率}
+	\end{equation}
+	\textbf{Fisher判别分析}\\
+	设:
+	\begin{align*}
+			\text{数据集矩阵为:}
+		\quad
+		X&=\left[
+		\begin{array}{c}
+			X_1^T\\
+			X_2^T\\
+			\vdots\\
+			X_n^T
+		\end{array}
+		\right]_{n{\times}p}
+		\quad X_i=\left[
+		\begin{array}{c}
+			x_{i1}\\
+			x_{i2}\\
+			\vdots\\
+			x_{ip}\\
+		\end{array}
+		\right]_{p{\times}1}
+	\end{align*}
+	首先我们设属于正负样本的集合分别为$X_{c1},X_{c2}$:
+	\begin{align*}
+		X_{c1}=\{X_i|y_i=+1\} \quad\quad X_{c2}=\{X_i|y_i=-1\} \\
+		|X_{c1}|=N_1 \quad\quad |X_{c2}|=N_2 \quad \quad \text{且}\quad N_1+N_2=N
+	\end{align*}
+	Fisher判别分析判别分析的本质是我们把一个多维样本投影一维空间中，使投影后正类和负类的类间距离大，类内方差小：\\
+	设投影的的方向为$W$,且$ W$是一个$p$维列向量,且有$\Vert W \Vert=1$：\\
+	那么第$i$个样本在$W$方向的投影为:
+	\begin{equation}
+		Z_i=\Vert X_i \Vert\cos(\theta)=\Vert X_i \Vert \Vert W \Vert\cos(\theta)=W^TX_i
+	\end{equation}
+	那么正类样本和负类样本投影在一维空间的均值为:
+	\begin{equation}
+		{\mathop{Z} \limits^{-}}_{c1}=\dfrac{1}{N_1}\sum_{X_i \in X_{c1}}W^TX_i \quad \quad
+		{\mathop{Z} \limits^{-}}_{c2}=\dfrac{1}{N_2}\sum_{X_i \in X_{c2}}W^TX_i
+	\end{equation}
+	投影后正负类样本之间的距离为:
+	\begin{equation}
+		Dis=\left( {\mathop{Z} \limits^{-}}_{c1} - {\mathop{Z} \limits^{-}}_{c2}\right)^2
+	\end{equation}
+	投影后正负类样本,类内的方差为:
+	\begin{equation}
+		S_{c1}=\dfrac{1}{N_1}{\sum_{X_i \in X_{c1}}}{\left( W^TX_i-{\mathop{Z} \limits^{-}}_{c1}\right)^2}
+		\quad\quad
+		S_{c2}=\dfrac{1}{N_2}{\sum_{X_i \in X_{c2}}}{\left( W^TX_i-{\mathop{Z} \limits^{-}}_{c2}\right)^2}
+	\end{equation}
+	定义目标函数$J(W)$:
+	\begin{equation}
+		J(W)=\dfrac{\left( {\mathop{Z} \limits^{-}}_{c1} - {\mathop{Z} \limits^{-}}_{c2}\right)^2}
+		{S_{c1}+S_{c2}}
+	\end{equation}
+	我们只需要求:
+	\begin{equation}
+		W_{MLE}={\mathop{argmax}\limits_{W}} \left[J(W)\right]
+	\end{equation}
+	对于$\left( {\mathop{Z} \limits^{-}}_{c1} - {\mathop{Z} \limits^{-}}_{c2}\right)^2$:
+	\begin{align*}
+		\left( {\mathop{Z} \limits^{-}}_{c1} - {\mathop{Z} \limits^{-}}_{c2}\right)^2 &=\left(\dfrac{1}{N_1}\sum_{X_i \in C_1}W^TX_i-\dfrac{1}{N_2}\sum_{X_i \in C_2}W^TX_i \right)^2\\
+		\\&=\left(W^T \left[\dfrac{1}{N_1}\sum_{X_i \in C_1}X_i-\dfrac{1}{N_2}\sum_{X_i \in C_2}X_i\right] \right)^2\\
+		\\&=\left(W^T \left[  {\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2}\right] \right)^2\\
+		\\&=W^T\left({\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2} \right)\left({\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2} \right)^TW
+	\end{align*}
+	对于$S_{c1}$:
+	\begin{align*}
+		S_{c1}&=\dfrac{1}{N_1}\sum_{i=1}^{N_1}\left( W^TX_i-{\mathop{Z} \limits^{-}}_{c1}\right) \left( W^TX_i-{\mathop{Z} \limits^{-}}_{c1}\right)^T\\
+		&=\dfrac{1}{N_1}\sum_{i=1}^{N_1} W^T \left( X_i-{\mathop{X} \limits^{-}}_{c1}\right) \left( X_i-{\mathop{X} \limits^{-}}_{c1}\right)^TW \\
+		&=W^T \dfrac{1}{N_1}\sum_{i=1}^{N_1} \left( X_i-{\mathop{X} \limits^{-}}_{c1}\right) \left( X_i-{\mathop{X} \limits^{-}}_{c1}\right)^T W
+	\end{align*}
+	而$ \dfrac{1}{N_1}\sum_{i=1}^{N_1} \left( X_i-{\mathop{X} \limits^{-}}_{c1}\right) \left( X_i-{\mathop{X} \limits^{-}}_{c1}\right)^T$就是$X_{c1}$的方差，我们记:
+	\begin{equation}
+		S_1=\dfrac{1}{N_1}\sum_{i=1}^{N_1} \left( X_i-{\mathop{X} \limits^{-}}_{c1}\right) \left( X_i-{\mathop{X} \limits^{-}}_{c1}\right)^T
+	\end{equation}
+	所以有:
+	\begin{equation}
+		S_{c1}=W^T S_1 W  \quad\quad \textbf{$S_1$为$X_{c1}$的方差}
+	\end{equation}
+	同理有:
+	\begin{equation}
+		S_{c2}=W^T S_2 W  \quad\quad \textbf{$S_2$为$X_{c2}$的方差}
+	\end{equation}
+	所以损失函数$J(W)$可以被写成:
+	\begin{equation}
+		J(W)=\dfrac{W^T\left({\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2} \right)\left({\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2} \right)^TW}{W^T\left( S_1+S_2 \right)W}
+	\end{equation}
+	我们引入两个符号$X_{12},S_{12}$,它们均为$p\times p$的矩阵:
+	\begin{align*}
+		X_{12}=\left({\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2} \right)\left({\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2} \right)^T \quad \quad S_{12}=S_1+S_2 
+	\end{align*}
+	那么损失函数写成:
+	\begin{align*}
+		J(W)=\dfrac{W^TX_{12}W}{W^TS_{12}W} = W^TX_{12}W\left(W^TS_{12}W\right)^{-1}
+	\end{align*}
+	对$J(W)$求$W$的导数:
+	\begin{align}
+		\frac{\mathrm{d} J(W)}{\mathrm{d} W} &=\frac{\mathrm{d} W^TX_{12}W}{\mathrm{d} W} \left(W^TS_{12}W\right)^{-1}+ W^TX_{12}W \frac{\mathrm{d} \left(W^TS_{12}W\right)^{-1}}{\mathrm{d} W} 
+	\end{align}
+	又因为:
+	\begin{align*}
+		\frac{\mathrm{d} J(W)}{\mathrm{d} W} &=\frac{\mathrm{d} W^T}{\mathrm{d} W}X_{12}W+ \frac{\mathrm{d} W}{\mathrm{d} W}\left( W^TX_{12}\right)^T\\
+		&=X_{12}W+X_{12}^TW\\
+		&=2X_{12}W
+	\end{align*}
+	且:
+	\begin{align*}
+		 \frac{\mathrm{d} \left(W^TS_{12}W\right)^{-1}}{\mathrm{d} W}& =-\left(W^TS_{12}W\right)^{-2}\frac{\mathrm{d} W^TS_{12}W}{\mathrm{d} W}\\
+		 															&=-2\left(W^TS_{12}W\right)^{-2}\left( S_{12}W \right)
+	\end{align*}
+	所以有:
+	\begin{equation}
+		\frac{\mathrm{d} J(W)}{\mathrm{d} W}=2X_{12}W\left(W^TS_{12}W\right)^{-1}-2 W^TX_{12}W\left(W^TS_{12}W\right)^{-2}\left( S_{12}W \right)
+	\end{equation}
+	注意到$W^TS_{12}W, W^TX_{12}W$是一个数，且$W^TS_{12}W,$不为$0$,所以我们令$	\frac{\mathrm{d} J(W)}{\mathrm{d} W}=0$,可以得到：
+	\begin{equation*}
+		X_{12}W=\dfrac{W^TX_{12}W}{W^TS_{12}W}S_{12}W		
+	\end{equation*}
+
+	注意到$\dfrac{W^TX_{12}W}{W^TS_{12}W} $是一个数值，而且这个Fisher判别分析中，我们并不关心$W$这个向量的取值，我们仅仅关心$W$的方向上面那个等式中两端都是一个$p$维列向量，$\dfrac{W^TX_{12}W}{W^TS_{12}W}>0$不改变等式右端的方向，所以可以推断出如果等式成立，那么$W$必须与$\left( X_{12}\right)^{-1}S_{12}W$同向，我们将$X_{12}$带入到等式中可以得到:
+	\begin{equation}
+		\left({\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2} \right)\left({\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2} \right)^T W  \quad \textbf{ 同向 } \quad S_{12} W
+	\end{equation}
+	而$\left({\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2} \right)^T W$ 也只是一个不改变向量方向的数值
+	所以如果要使$\frac{\mathrm{d} J(W)}{\mathrm{d} W}==0$，那么必须要让${\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2}$与$S_{12} W$同向，
+	所以我们最终得到了当$\frac{\mathrm{d} J(W)}{\mathrm{d} W}==0$时$W$的取值:
+	\begin{equation}
+		W \quad \textbf{ 方向为 } \quad  \left( {\mathop{X}\limits^{-}}_{C_1}-{\mathop{X}\limits^{-}}_{C_2}\right) \left( S_{12}\right)^{-1}
+	\end{equation}
+	且$\Vert W \Vert_2=1$，这样我们也就求出来了投影的方向，在进行分类任务时，我们把验证集的样本通过$W$投影到一维空间，然后计算这个样本投影后的值离${\mathop{Z}\limits^{-}}_{C_1},{\mathop{Z}\limits^{-}}_{C_2}$的距离，离谁进就属于哪个类别。
+	\subsection{\Large 软分类:}
+	\textbf{逻辑回归}\\
+	我们规定数据集矩阵$X$，投影向量$W$分别为:
+	\begin{equation*}
+		X=\left[
+			\begin{array}{c}
+				X_1^T\\
+				X_2^T\\
+				\vdots\\
+				X_n^T
+			\end{array}
+		\right]_{n\times{p+1}} \quad \textbf{其中：}\quad X_i=\left[
+			\begin{array}{c}
+				x_{i1}\\
+				x_{i2}\\
+				\vdots \\
+				x_{ip}\\
+				1
+			\end{array} 
+		\right] \quad W=\left[
+			\begin{array}{c}
+				w_{1}\\
+				w_{2}\\
+				\vdots\\
+				w_{p}\\
+				b
+			\end{array}
+		\right]
+	\end{equation*}
+	那么逻辑回归的原理就是通过一个投影向量$W$把样本投影到一维轴上，如果投影后的值大于0则认为是正类，否则认为是负类。基于此我们规定如果$X_i$是正类，那么$y_i=1$，否则$y_i=0$,标签矩阵$Y$被定义为:
+	\begin{equation*}
+		Y=\left[
+			\begin{array}{c}
+				y_1\\
+				y_2\\
+				\vdots\\
+				y_n
+			\end{array}
+		\right]
+	\end{equation*}
+	引入一个激活函数$\sigma(x)$
+		\begin{equation*}
+			\sigma(x)=\dfrac{1}{1+\exp(-x)} \in (0,1)
+		\end{equation*}
+	样本$x_i$属于两个类别的概率分别为:
+	\begin{equation}
+		\begin{cases}
+			p_1=p(y_i=1|X_i)=\sigma(W^TX_i)=\dfrac{1}{1+\exp(-W^TX_i)} & \textbf{$X_i$ 为正样本}\\
+			p_0=p(y_i=0|X_i)=1-\sigma(W^TX_i)=\dfrac{\exp(-W^TX_i)}{1+\exp(-W^TX_i)} & \textbf{$X_i$ 为负样本}	
+		\end{cases}
+	\end{equation}
+	如果一个样本本$(X_i,y_i)$属于正类也就是$y_i=1$，模型应该使$p_1$尽可能的大，如果属于负样本$y_i=0$,模型应该使$p_0$尽可能的大，所以对于每一个样本$(X_i,y_i)$逻辑回归可以建模为:
+	\begin{equation}
+		p(y_i|X_i)=p_1^{y_i}\times p_0^{1-y_i}
+	\end{equation}
+	所以我们只需要最大化：
+	\begin{equation*}
+		P(Y|X)=\prod \limits_{i=1}^n p(y_i|X_i)=\prod \limits_{i=1}^n p_1^{y_i}\times p_0^{1-y_i}
+	\end{equation*}
+	我们使用极大释然估计法求$W_{MLE}$:
+	\begin{align*}
+		W_{MLE}&={\mathop{argmax}\limits_{W}} \log P(Y|X)\\
+			&={\mathop{argmax}\limits_{W}} \sum_{i=1}^{n} \left[ y_i \log p_1  +(1-y_i) \log p_0  \right]\\
+			&={\mathop{argmax}\limits_{W}} \sum_{i=1}^{n} \left[ y_iW^TX_i - \log \left[\exp(W^TX_i) +1\right] \right]\\
+			&={\mathop{argmin}\limits_{W}} \sum_{i=1}^{n} \left[\log \left[\exp(W^TX_i) +1\right]- y_iW^TX_i \right]
+	\end{align*}
+	也就是我们求一个$W$使$\sum_{i=1}^{n} \left[\log \left[\exp(W^TX_i) +1\right]- y_iW^TX_i \right]$最小化即可:\\
+	因为：
+	\begin{equation}
+		\frac{\partial \left[\log \left[\exp(W^TX_i) +1\right]- y_iW^TX_i \right]}{\partial W}=-y_iX_i+\dfrac{\exp(W^TX_i)}{\exp(W^TX_i) +1}X_i\\
+		=\left[ \dfrac{\exp(W^TX_i)}{\exp(W^TX_i) +1}-y_i\right]X_i
+	\end{equation}
+	所以:
+	\begin{equation}
+		\nabla W=\frac{\partial \sum_{i=1}^{n} \left[\log \left[\exp(W^TX_i) +1\right]- y_iW^TX_i \right]}{\partial W}
+		= 
+		\sum_{i=1}^{n} \left[ \dfrac{\exp(W^TX_i)}{\exp(W^TX_i) +1}-y_i\right]X_i
+	\end{equation}
+	最后利用梯度下降法求解即可:
+	\begin{equation}
+		W^{t+1}=W^{t}-\lambda \nabla W
+	\end{equation}
+	\textbf{高斯判别分析}\\
+	高斯判别分析是一种概率生成模型，上面的逻辑回归是一种概率判别模型，两种的区别是概率判别模型直接求$p(y=1|x)$，然后令$p(y=0|x)=1-p(y=1|x)$，判别模型直接求样本属于某一类的概率。而生成模型并不求具体的概率，他只是比较$p(y=1|x),p(y=0|x)$谁大。
+	依据贝叶斯公式，我们知道:
+	\begin{equation}
+		\begin{cases}
+			p(y=1|x)=\dfrac{p(y=1,x)}{p(x)}=\dfrac{p(y=1) \times p(x|y=1)}{p(x)}
+			\\\\
+			p(y=0|x)=\dfrac{p(y=0,x)}{p(x)}=\dfrac{p(y=0) \times p(x|y=0)}{p(x)} 
+		\end{cases}
+	\end{equation}
+	所以如果我们要比较$p(y=1|x),p(y=0|x)$，只需要去比较$p(y=1) \times p(x|y=1),p(y=0) \times p(x|y=0)$谁大即可。
+	高斯判别分析假设$y$服从伯努利分布，$y \quad \sim \quad B(\Theta)$,可以写成:
+	\begin{equation*}
+		p(y_i)={\Theta}^{y_i} \cdot{\left(1-\Theta\right)}^{1-y_i}
+	\end{equation*}
+	并且假设:
+	\begin{align*}
+		x|y=1 \quad \sim \quad N(u_1,\Sigma)\\
+		x|y=0 \quad \sim \quad N(u_2,\Sigma)
+	\end{align*}
+	分别记$x|y=1,x|y=0$的概率密度函数为:$f_1,f_2$,那么$p(x_i|y_i)$可以表示成:
+	\begin{equation}
+		p(x_i|y_i)={f_1}^{y_i}\cdot {f_2}^{1-y_i}
+	\end{equation}
+	我们要估计出一组参数$\Theta,u_1,u_2,\Sigma$,使$p(Y|X)$最大，由于$p(X)$在数据集确定时是一个定值，所以只需要使$p(Y,X)$最大即可\\
+	我们的$log$释然函数为:
+	\begin{align*}
+		L(\Theta,u_1,u_2,\Sigma)	&=\log p(Y,X)\\
+			&=\log \prod \limits_{i=1}^n p(y_i,x_i)\\
+			&= \sum_{i=1}^{n} \left[ \log p(y_i) + \log p(x_i|y_i) \right]\\
+			&= \sum_{i=1}^{n} \left[ \log \left[{\Theta}^{y_i} \cdot{\left(1-\Theta\right)}^{1-y_i} \right] + \log \left[{f_1}^{y_i}\cdot {f_2}^{1-y_i}\right] \right]\\
+			&= \sum_{i=1}^{n} \left[ 
+				y_i \log \Theta +(1-y_i) \log \left[ 1-\Theta\right] +y_i \log f_1 +(1-y_i)\log f_2
+			\right]
+	\end{align*}
+	所以，所谓我们需要估计的$\Theta,u_1,u_2,\Sigma$可以写成:
+	\begin{equation}
+		\left(\Theta,u_1,u_2,\Sigma \right)={\mathop{argmax}\limits_{\Theta,u_1,u_2,\Sigma}} \quad L(\Theta,u_1,u_2,\Sigma)
+	\end{equation}
+	首先我们估计$\Theta$：
+	\begin{align*}
+		\frac{\partial L}{\partial \Theta}=\sum_{i=1}^{n}\left[ \dfrac{y_i}{\Theta}-\dfrac{1-y_i}{1-\Theta} \right]
+	\end{align*}
+	令$\frac{\partial L}{\partial \Theta}=0$，求得:
+	\begin{equation}
+		\Theta_{MLE}=\dfrac{\sum_{i=1}^{n}y_i}{\sum_{i=1}^{n}(1-y_i)+\sum_{i=1}^{n}y_i}
+	\end{equation}
+	我们记数据集中有正类($y_i=1$)，负类($y_i=0$)的样本个数分别为:$N_1,N_2$，那么显然:
+	\begin{equation}
+		\Theta_{MLE}=\dfrac{N_1}{N_1+N_2}
+	\end{equation}
+	我们将$f_1,f_2$展开:
+	\begin{equation}
+		\begin{cases}
+			f_1=\dfrac{1}{ \left(2\pi \right)^{ \frac{p}{2} } |\Sigma|^{\frac{1}{2}} } \exp \left[ -\dfrac{1}{2} \left(x_i-u_1 \right)^T\Sigma^{-1}  \left(x_i-u_1 \right) \right]  
+			\\
+			f_2=\dfrac{1}{ \left(2\pi \right)^{ \frac{p}{2} } |\Sigma|^{\frac{1}{2}} } \exp \left[ -\dfrac{1}{2} \left(x_i-u_2 \right)^T\Sigma^{-1}  \left(x_i-u_2 \right) \right] 
+		\end{cases}
+	\end{equation}
+	先求$u_{1_{MEL}}$：
+	\begin{align*}
+		\frac{\partial L}{\partial u_1}&=\frac{\partial \sum_{i=1}^{n}  \dfrac{y_i}{2} \left[ (x_i-u_1)^T \Sigma^{-1} (x_i-u_1) \right]}{\partial u_1}\\
+		&=\frac{\partial \sum_{i=1}^{n}  \dfrac{y_i}{2} \left[ u_1^T\Sigma^{-1}u_1-2u_1^T\Sigma^{-1}x_i \right]}{\partial u_1}\\
+		&=\sum_{i=1}^{n} y_i \left( \Sigma^{-1}u_1 -\Sigma^{-1}x_i\right)
+	\end{align*}
+	注意到$\Sigma$是可逆的矩阵，那么$\Sigma$是列满秩矩阵，也就是可消去，如果我们要让$\frac{\partial L}{\partial u_1}=0$，也就是要让：
+	\begin{equation}
+		u_{1_{MEL}}=\dfrac{1}{N_1}\sum_{x_i \in D_1} x_i \quad \textbf{式中$D_1$表示 属于正类$(y_i=1)$的所有样本集合}
+	\end{equation}
+	同理可得:
+	\begin{equation}
+		u_{2_{MEL}}=\dfrac{1}{N_2}\sum_{x_i \in D_2} x_i \quad \textbf{式中$D_2$表示 属于负类$(y_i=0)$的所有样本集合}
+	\end{equation}
+	最后我们求解$\Sigma_{MLE}$：
+	\begin{align*}
+		\frac{\partial L}{\partial \Sigma}=-\dfrac{1}{2} \left[ (N_1+N_2)\frac{\partial \log |\Sigma|}{\partial \Sigma} +\sum_{x_i \in D_1}
+		\frac{\partial (x_i-u_1)^T\Sigma^{-1}(x_i-u_1)}{\partial \Sigma}+\sum_{x_i \in D_2}
+		\frac{\partial (x_i-u_2)^T\Sigma^{-1}(x_i-u_2)}{\partial \Sigma}
+		\right]
+	\end{align*}
+	我们观察到其实$(x_i-u_1)^T\Sigma^{-1}(x_i-u_1),(x_i-u_2)^T\Sigma^{-1}(x_i-u_2)$其实是一个数，那么一个数的迹等于它自己，所以有:
+	\begin{align}
+		\begin{cases}
+			(x_i-u_1)^T\Sigma^{-1}(x_i-u_1) =tr((x_i-u_1)^T\Sigma^{-1}(x_i-u_1)) 
+			\\
+			(x_i-u_2)^T\Sigma^{-1}(x_i-u_2) =tr((x_i-u_2)^T\Sigma^{-1}(x_i-u_2))
+		\end{cases}
+	\end{align}
+	对于迹有运算$tr(AB)=tr(BA)$成立:
+	所以有:
+	\begin{align}
+		\begin{cases}
+			tr((x_i-u_1)^T\Sigma^{-1}(x_i-u_1)) =tr((x_i-u_1)(x_i-u_1)^T\Sigma^{-1})
+			\\
+			tr((x_i-u_2)^T\Sigma^{-1}(x_i-u_2)) =tr((x_i-u_2)(x_i-u_2)^T\Sigma^{-1})
+		\end{cases}
+	\end{align}
+	所以：
+	\begin{align*}
+		\sum_{x_i \in D_1}\frac{\partial (x_i-u_1)^T\Sigma^{-1}(x_i-u_1)}{\partial \Sigma}&=\sum_{x_i \in D_1}\frac{\partial \left[ tr((x_i-u_1)(x_i-u_1)^T\Sigma^{-1}) \right]}{\partial \Sigma}\\
+		&=\frac{\partial \left[\sum_{x_i \in D_1} tr((x_i-u_1)(x_i-u_1)^T\Sigma^{-1}) \right]}{\partial \Sigma}\\		
+		&=\frac{\partial \left[ tr(\left[\sum_{x_i \in D_1}(x_i-u_1)(x_i-u_1)^T\right]\Sigma^{-1} ) \right]}{\partial \Sigma}\\
+	\end{align*}
+	$\dfrac{1}{N_1}\sum_{x_i \in D_1}(x_i-u_1)(x_i-u_1)^T$就是所有正类样本的协方差矩阵,记所有正类样本的协方差矩阵为$S_1$：
+	所以有：
+	\begin{equation}
+		\sum_{x_i \in D_1}\frac{\partial (x_i-u_1)^T\Sigma^{-1}(x_i-u_1)}{\partial \Sigma}
+		=
+		N_1 \frac{\partial \left[ tr(S_1\Sigma^{-1} ) \right]}{\partial \Sigma}	
+	\end{equation}
+	同理:
+		\begin{equation}
+		\sum_{x_i \in D_2}\frac{\partial (x_i-u_2)^T\Sigma^{-1}(x_i-u_2)}{\partial \Sigma}
+		=
+		N_2 \frac{\partial \left[ tr(S_2\Sigma^{-1} ) \right]}{\partial \Sigma}	
+	\end{equation}
+	式中$S_2$为所有负样本的协方差矩阵。\\	
+	下面计算$\frac{\partial \left[ tr(S_1\Sigma^{-1} ) \right]}{\partial \Sigma}$：
+	
+	\begin{align*}
+		\frac{\partial \left[ tr(S_1\Sigma^{-1} ) \right]}{\partial \Sigma} 
+		& =\frac{\partial \left[ tr(\Sigma^{-1}S_1 ) \right]}{\partial \Sigma}\\
+		&=\frac{\partial \left[ tr(\Sigma^{-1}S_1 ) \right]}{\partial \Sigma^{-1}} \frac{\partial \Sigma^{-1}}{\partial \Sigma} \\
+		&	\textbf{因为有公式:} \frac{\partial tr(AB)}{\partial A}=B^T\\
+		&=-S_1^T\Sigma^{-2}\\
+		&=-S_1\Sigma^{-2}\\
+	\end{align*}
+	同理可得:
+	\begin{align*}
+		\frac{\partial \left[ tr(S_2\Sigma^{-1} ) \right]}{\partial \Sigma}= -S_2\Sigma^{-2}
+	\end{align*}
+	再求:$\frac{\partial \log |\Sigma|}{\partial \Sigma}$:
+	\begin{align*}
+		\frac{\partial \log |\Sigma|}{\partial \Sigma}
+		&=\dfrac{1}{|\Sigma|} \frac{\partial |\Sigma|}{\partial \Sigma}\\\\
+		& \textbf{因为有 :}\frac{\partial |A|}{\partial A}=|A|A^{-1}\\\\
+		&=\dfrac{1}{|\Sigma|} |\Sigma| \Sigma^{-1} \\
+		&=\Sigma^{-1}
+	\end{align*}
+	所以$\frac{\partial L}{\partial \Sigma}$可以写成:
+	\begin{equation}
+		\frac{\partial L}{\partial \Sigma}=-\dfrac{1}{2}\left[ (N_1+N_2)\Sigma^{-1} -N_1S_1\Sigma^{-2} -N_2S_2\Sigma^{-2}\right]
+	\end{equation}
+	令$\frac{\partial L}{\partial \Sigma}==0$，可以得到:
+	\begin{equation}
+		\Sigma_{MLE}=\dfrac{N_1}{N_1+N_2}S_1+\dfrac{N_2}{N_1+N_2}S_2
+	\end{equation}
+	当要预测样本$x_i$时，我们利用$ \Theta_{MLE} ,u_{1_{MLE}} ,u_{2_{MLE}}  ,\Sigma_{MLE}$，分别计算$p(y=1) \times p(x|y=1)$和$p(y=0) \times p(x|y=0)$，谁大$x_j$就属于哪一类。
+	\\ \textbf{朴素贝叶斯分类器}\\
+	我们假设是一个二分类的问题，对于样本$x_i$，$x_i=\left[ x_{i1},x_{i2},\ldots x_{ip}\right]^T$,也就是这个样本共有$p$个特征，这个样本所属的类别$y_i=1$或者$y_i=0$，那么朴素贝叶斯分类器认为各个样本之间相互独立，并且样本之间的特征也是相互独立的。\\
+	当给出一个样本$x_i$时，与高斯判别分析一样，我们去比较$p(y_i=1|x_i),p(y_i=0|x_i)$谁大，因为:
+		\begin{equation}
+		\begin{cases}
+			p(y_i=1|x_i)=\dfrac{p(y_i=1,x_i)}{p(x_i)}=\dfrac{p(y_i=1) \times p(x_i|y_i=1)}{p(x_i)}
+			\\\\
+			p(y_i=0|x_i)=\dfrac{p(y_i=0,x_i)}{p(x_i)}=\dfrac{p(y_i=0) \times p(x_i|y_i=0)}{p(x_i)}
+		\end{cases}
+	\end{equation}
+	我们只需要比较这两个$p(y_i=1) \times p(x_i|y_i=1)$和$p(y_i=0) \times p(x_i|y_i=0)$。\\
+	我们通常会假设$y$服从伯努利分布，即$y\sim B(\Theta)$,我们可以利用极大释然估计法求出$\Theta_{MLE}=\dfrac{N_1}{N_1+N_2}$,$N_1,N_2$分别为样本数据集中属于正类和负类的数量,这样我们就可以知道:
+	\begin{equation}
+		\begin{cases}
+			p(y_i=1)=\Theta_{MLE}\\
+			p(y_i=0)=1-\Theta_{MLE}
+		\end{cases}
+	\end{equation}
+	由于假设样本之间的特征是独立的，所以$p(x_i|y_i=1)$和$p(x_i|y_i=0)$可以展开成：
+	\begin{equation}
+		\begin{cases}
+			p(x_i|y_i=1)=\prod \limits_{j=1}^p p(x_{ij}|y_i=1)  \\
+			p(x_i|y_i=0)=\prod \limits_{j=1}^p p(x_{ij}|y_i=0)
+		\end{cases}
+	\end{equation}
+	我们记$Z_j \quad j=1,2,\ldots,p$所有样本的第$j$个特征，那么我们通常认为:
+	\begin{equation}
+		\begin{cases}
+			Z_j|y=1 \quad \sim\sim \quad N(u,\sigma) \quad \quad &\textbf{如果$Z_j$是连续型随机变量} \\
+			Z_j|y=1 \quad \sim\sim \quad Categorical(\alpha_1,\alpha_2,\ldots,\alpha_m) &\textbf{如果$Z_j$是离散型随机变量}
+		\end{cases}
+	\end{equation}
+	式中$\alpha_i \quad i=1,\ldots,m$为$Z_j$属于第$i$个类别的概率，且$\sum_{i=1}^{m}\alpha_{i}=1$,我们对所有的特征$Z_j|y=1 \quad j=1,2,\ldots,p$都建模
+	，利用极大释然估计法得到$Z_j|y=1$ 对应的分布，那么也就是得到了概率$p(Z_j|y=1)$，那么$p(x_i|y_i=1)$可以写成:
+	\begin{equation}
+		\begin{aligned}
+		p(x_i|y_i=1)=\prod \limits_{j=1}^p p(x_{ij}|y_i=1)=\prod \limits_{j=1}^p p(Z_j=x_{ij}|y_i=1)\\
+		\textbf{其实就是把$x_{ij}$的值直接作为$Z_j$的取值往分布函数里面丢得到概率}
+		\end{aligned}
+	\end{equation}
+	同理我们可以利用极大释然估计法得到$Z_j|y=0$ 对应的分布,然后计算$p(x_i|y_i=0)$
+		\begin{equation}
+		\begin{aligned}
+			p(x_i|y_i=0)=\prod \limits_{j=1}^p p(x_{ij}|y_i=0)=\prod \limits_{j=1}^p p(Z_j=x_{ij}|y_i=0)\\
+		\end{aligned}
+	\end{equation}	
+	所以有:
+	\begin{equation}
+		\begin{cases}
+			p(y_i=1) \times p(x_i|y_i=1)=\quad \quad \Theta_{MLE} & \prod \limits_{j=1}^p p(Z_j=x_{ij}|y_i=1)\\
+			p(y_i=0) \times p(x_i|y_i=0)=(1-\Theta_{MLE}) & \prod \limits_{j=1}^p p(Z_j=x_{ij}|y_i=0)\\
+		\end{cases}
+	\end{equation}
+	谁大$x_i$就属于那个类别
+
+	
+
+	
+	
+	
+
+
+	
+	
+
+	
+	
+
+
+	
+	
+
+
+
+	
+	 
+
+	
+	
+	
+
+
+	
+	
+	
+
+
+	
+	
+	
+	
+	
+\end{document}
+	
+
